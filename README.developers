@@ -101,6 +101,9 @@ https://github.com/limboemu/limbo
     # example for 5.1.0:
     cd ./limbo-android-lib/src/main/jni/qemu/
     patch -p1 < ../patches/qemu-5.1.0.patch
+    # 5.1.0 only, optional: ODROID-GO Advance Black Edition (RK3326) board,
+    # Cortex-A35 CPU model (see section 12)
+    patch -p1 < ../patches/qemu-5.1.0-odroid-go-advance.patch
     # for 2.9.1:
     patch -p1 < ../patches/qemu-2.9.1.patch
 
@@ -341,3 +344,40 @@ See file COPYING under root directory
 and LICENSE under limbo-android-lib/src/main/assets
 
 Other source included are released under their own license please view Licenses under each subdirectory
+
+===============================================================================
+12. ODROID-GO Advance Black Edition board (aarch64-softmmu, QEMU 5.1.0)
+
+    patches/qemu-5.1.0-odroid-go-advance.patch adds the machine
+    "odroid-go-advance-be" (Hardkernel ODROID-GO Advance rev 1.1 / Black
+    Edition, Rockchip RK3326) to QEMU 5.1.0.  It is a backport of the board
+    and device models from the Xen-alpha/qemu fork (branch
+    claude/qemu-odroid-go-advance-be-rroh3b) and contains:
+      - the RK3326 SoC (GIC-400, CRU/GRF/PMU, GPIO, I2C, SARADC, TSADC,
+        OTP, timers, watchdog, PWM, DW-MSHC SD/MMC, SFC SPI NOR, VOP +
+        IOMMU + MIPI DSI panel, PL330, DWC2/EHCI/OHCI)
+      - the RK817 PMIC, buttons, analog stick and board wiring
+      - a Cortex-A35 CPU model (not present in 5.1.0)
+      - target/arm/psci.c: unknown SMC calls through the PSCI conduit
+        return NOT_SUPPORTED (as in later QEMU and real TF-A) instead of
+        being UNDEFINED; the Rockchip kernels issue SiP SMC calls.
+    It applies on top of qemu-5.1.0.patch.  Documentation:
+    qemu/docs/system/arm/odroid-go-advance.rst
+
+    Build Limbo with BUILD_GUEST=aarch64-softmmu, then in the app:
+      - Machine type: odroid-go-advance-be, CPU: Default (cortex-a35),
+        CPUs: 4, RAM: 1024 MB, VGA/network: none
+      - HDA: the SD card image, interface "sd"
+        (the image may contain uboot.img at sector 0x4000, as written by
+        Hardkernel's sd_fusing.sh; it is started automatically)
+      - optional HDB: a 16 MB SPI flash image, interface "mtd"
+      - or use kernel/initrd/append to boot a kernel directly; pass the
+        board DTB with "-dtb <file>" in Extra params
+    Host keys: cursor = D-pad, X/Z/S/A = A/B/X/Y, Q/W = L1/R1,
+    E/R = L2/R2, 1-6 = F1-F6, I/K/J/L = analog stick, P = power key.
+
+    Tested on a Linux desktop build of qemu-5.1.0 + this patch (gcc and
+    clang): Hardkernel u-boot odroidgoA-v2017.09, Hardkernel linux
+    odroidgoA-4.4.y and mainline Linux 6.12 boot to user space.  Not tested
+    on an Android device.
+

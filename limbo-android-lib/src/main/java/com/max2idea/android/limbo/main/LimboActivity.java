@@ -807,11 +807,18 @@ public class LimboActivity extends AppCompatActivity
         if(getMachine() == null)
             return;
 
-        final String[] items = {
-                "ide",
-                "scsi",
-                "virtio"
-        };
+        ArrayList<String> itemList = new ArrayList<>();
+        itemList.add("ide");
+        itemList.add("scsi");
+        itemList.add("virtio");
+        // ARM boards with SD card slots (e.g. odroid-go-advance-be) and
+        // SPI/parallel NOR flash attach their storage as if=sd / if=mtd
+        if (LimboApplication.arch == Config.Arch.arm
+                || LimboApplication.arch == Config.Arch.arm64) {
+            itemList.add("sd");
+            itemList.add("mtd");
+        }
+        final String[] items = itemList.toArray(new String[0]);
         final AlertDialog.Builder mBuilder = new AlertDialog.Builder(this);
         mBuilder.setTitle(machineDriveName + " " + getString(R.string.Interface));
         int driveInterface = getMachineInterface(machineDriveName, items);

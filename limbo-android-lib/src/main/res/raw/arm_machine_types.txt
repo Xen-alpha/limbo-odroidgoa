@@ -32,6 +32,7 @@ netduino2
 netduinoplus2
 none
 nuri
+odroid-go-advance-be
 orangepi-pc
 palmetto-bmc
 raspi2
